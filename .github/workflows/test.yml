@@ -1,12 +1,12 @@
 name: Test
-on: [push, pull_request]
+on: push
 
 jobs:
   test:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
     steps:
     # Checks out a copy of your repository on the ubuntu-latest machine
     - uses: actions/checkout@v4
@@ -23,7 +23,8 @@ jobs:
           ~/.cache/pip
           ~/.local
           /usr/local/lib/ta-lib
-        key: ${{ runner.os }}-py-${{ matrix.python-version }}-deps-${{ hashFiles('**/requirements.txt') }}
+        key: ${{ runner.os }}-py-${{ matrix.python-version }}-deps-${{ hashFiles('**/requirements.txt')
+          }}
     - name: Install Python dependencies
       run: |
         # Install TA-Lib
@@ -53,10 +54,10 @@ jobs:
         # download-bundle
           rqalpha download-bundle
     - name: run test
-      run:  |
-          coverage run --source=rqalpha test.py
-          ls -al $HOME/.rqalpha/
-          ls -al $HOME/.rqalpha/bundle/
+      run: |
+        coverage run --source=rqalpha test.py
+        ls -al $HOME/.rqalpha/
+        ls -al $HOME/.rqalpha/bundle/
     - name: Upload coverage data to coveralls.io
       # https://coveralls-python.readthedocs.io/en/latest/usage/configuration.html#configuration
       # need COVERALLS_REPO_TOKEN
