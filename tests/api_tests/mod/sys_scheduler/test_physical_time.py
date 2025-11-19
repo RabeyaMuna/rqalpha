@@ -23,7 +23,7 @@ __config__ = {
         "frequency": "1d",
         "accounts": {
             "future": 1000000,
-        }
+        },
     },
     "extra": {
         "log_level": "error",

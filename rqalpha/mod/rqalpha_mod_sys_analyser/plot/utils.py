@@ -22,7 +22,8 @@ from numpy import array
 from pandas import DatetimeIndex, DataFrame, Series, to_datetime
 
 IndicatorInfo = namedtuple(
-    "IndicatorInfo", ("key", "label", "color", "formatter", "value_font_size", "label_width_multiplier")
+    "IndicatorInfo",
+    ("key", "label", "color", "formatter", "value_font_size", "label_width_multiplier"),
 )
 LineInfo = namedtuple("LineInfo", ("label", "color", "alpha", "linewidth"))
 SpotInfo = namedtuple("SpotInfo", ("label", "marker", "color", "markersize", "alpha"))
@@ -35,7 +36,9 @@ class IndexRange(namedtuple("IndexRange", ("start", "end", "start_date", "end_da
 
     @property
     def repr(self):
-        return "{}~{}, {} days".format(self.start_date, self.end_date, (self.end_date - self.start_date).days)
+        return "{}~{}, {} days".format(
+            self.start_date, self.end_date, (self.end_date - self.start_date).days
+        )
 
 
 def max_dd(arr: array, index: DatetimeIndex) -> IndexRange:
@@ -80,6 +83,12 @@ def weekly_returns(portfolio: DataFrame) -> Series:
 
 
 def trading_dates_index(trades: DataFrame, position_effect, index: DatetimeIndex):
-    return index.searchsorted(
-        to_datetime(trades[trades.position_effect == position_effect].trading_datetime), side="right"
-    ) - 1
+    return (
+        index.searchsorted(
+            to_datetime(
+                trades[trades.position_effect == position_effect].trading_datetime
+            ),
+            side="right",
+        )
+        - 1
+    )

@@ -23,9 +23,7 @@ __config__ = {
         "start_date": "2016-03-07",
         "end_date": "2016-03-08",
         "frequency": "1d",
-        "accounts": {
-            "future": 10000000000
-        }
+        "accounts": {"future": 10000000000},
     },
     "extra": {
         "log_level": "error",
@@ -41,58 +39,72 @@ __config__ = {
 
 def test_buy_open():
     def init(context):
-        context.f1 = 'P88'
+        context.f1 = "P88"
         subscribe(context.f1)
 
     def handle_bar(context, _):
         o = buy_open(context.f1, 1)
         assert_order(
-            o, order_book_id=context.f1, quantity=1, status=ORDER_STATUS.FILLED, side=SIDE.BUY, position_effect=POSITION_EFFECT.OPEN
+            o,
+            order_book_id=context.f1,
+            quantity=1,
+            status=ORDER_STATUS.FILLED,
+            side=SIDE.BUY,
+            position_effect=POSITION_EFFECT.OPEN,
         )
+
     return locals()
 
 
 def test_sell_open():
     def init(context):
-        context.f1 = 'P88'
+        context.f1 = "P88"
         subscribe(context.f1)
 
     def handle_bar(context, _):
         o = sell_open(context.f1, 1)
         assert_order(
-            o, order_book_id=context.f1, quantity=1, status=ORDER_STATUS.FILLED, side=SIDE.SELL, position_effect=POSITION_EFFECT.OPEN
+            o,
+            order_book_id=context.f1,
+            quantity=1,
+            status=ORDER_STATUS.FILLED,
+            side=SIDE.SELL,
+            position_effect=POSITION_EFFECT.OPEN,
         )
+
     return locals()
 
 
 def test_buy_close():
     def init(context):
-        context.f1 = 'P88'
+        context.f1 = "P88"
         subscribe(context.f1)
 
     def handle_bar(context, _):
         orders = buy_close(context.f1, 1)
         # TODO: Add More Sell Close Test
         assert len(orders) == 0
+
     return locals()
 
 
 def test_sell_close():
     def init(context):
-        context.f1 = 'P88'
+        context.f1 = "P88"
         subscribe(context.f1)
 
     def handle_bar(context, _):
         orders = sell_close(context.f1, 1)
         # TODO: Add More Sell Close Test
         assert len(orders) == 0
+
     return locals()
 
 
 def test_close_today():
     def init(context):
         context.fired = False
-        context.f1 = 'P88'
+        context.f1 = "P88"
         subscribe(context.f1)
 
     def handle_bar(context, _):
@@ -108,7 +120,7 @@ def test_close_today():
 def test_future_order_to():
     def init(context):
         context.counter = 0
-        context.f1 = 'P88'
+        context.f1 = "P88"
         subscribe(context.f1)
 
     def handle_bar(context, _):

@@ -25,7 +25,7 @@ __config__ = {
         "accounts": {
             "stock": 1000000,
             "future": 1000000,
-        }
+        },
     },
     "extra": {
         "log_level": "error",
@@ -41,7 +41,7 @@ __config__ = {
 
 def test_get_open_order():
     def init(context):
-        context.s1 = '000001.XSHE'
+        context.s1 = "000001.XSHE"
         context.limitprice = 8.9
         context.amount = 100
         context.counter = 0
@@ -50,7 +50,9 @@ def test_get_open_order():
     def handle_bar(context, _):
         context.counter += 1
 
-        order = order_shares(context.s1, context.amount, style=LimitOrder(context.limitprice))
+        order = order_shares(
+            context.s1, context.amount, style=LimitOrder(context.limitprice)
+        )
         context.order_id = order.order_id
         if context.counter == 2:
             assert order.order_id in get_open_orders()
@@ -61,13 +63,18 @@ def test_get_open_order():
 
 def test_submit_order():
     def init(context):
-        context.s1 = '000001.XSHE'
+        context.s1 = "000001.XSHE"
         context.amount = 100
         context.fired = False
 
     def handle_bar(context, bar_dict):
         if not context.fired:
-            submit_order(context.s1, context.amount, SIDE.BUY, bar_dict[context.s1].limit_up * 0.99)
+            submit_order(
+                context.s1,
+                context.amount,
+                SIDE.BUY,
+                bar_dict[context.s1].limit_up * 0.99,
+            )
             context.fired = True
         if context.fired:
             assert context.portfolio.positions[context.s1].quantity == context.amount
@@ -77,11 +84,15 @@ def test_submit_order():
 
 def test_cancel_order():
     def init(context):
-        context.s1 = '000001.XSHE'
+        context.s1 = "000001.XSHE"
         context.amount = 100
 
     def handle_bar(context, bar_dict):
-        order = order_shares(context.s1, context.amount, style=LimitOrder(bar_dict[context.s1].limit_down))
+        order = order_shares(
+            context.s1,
+            context.amount,
+            style=LimitOrder(bar_dict[context.s1].limit_down),
+        )
         cancel_order(order)
         assert order.order_book_id == context.s1
         assert order.filled_quantity == 0
@@ -93,8 +104,8 @@ def test_cancel_order():
 
 def test_update_universe():
     def init(context):
-        context.s1 = '000001.XSHE'
-        context.s2 = '600340.XSHG'
+        context.s1 = "000001.XSHE"
+        context.s2 = "600340.XSHG"
         context.order_count = 0
         context.amount = 100
 
@@ -102,7 +113,7 @@ def test_update_universe():
         context.order_count += 1
         if context.order_count == 1:
             update_universe(context.s2)
-            his = history_bars(context.s2, 5, '1d', 'close')
+            his = history_bars(context.s2, 5, "1d", "close")
             assert sorted(his.tolist()) == sorted([26.06, 26.13, 26.54, 26.6, 26.86])
 
     return locals()
@@ -110,7 +121,7 @@ def test_update_universe():
 
 def test_subscribe():
     def init(context):
-        context.f1 = 'AU88'
+        context.f1 = "AU88"
         context.amount = 1
         subscribe(context.f1)
 
@@ -122,7 +133,7 @@ def test_subscribe():
 
 def test_unsubscribe():
     def init(context):
-        context.f1 = 'AU88'
+        context.f1 = "AU88"
         context.amount = 1
         subscribe(context.f1)
         unsubscribe(context.f1)
@@ -135,7 +146,7 @@ def test_unsubscribe():
 
 def test_get_yield_curve():
     def handle_bar(_, __):
-        df = get_yield_curve('20161101')
+        df = get_yield_curve("20161101")
         assert df.iloc[0, 0] == 0.019923
         assert df.iloc[0, 6] == 0.021741
 
@@ -155,15 +166,17 @@ def test_history_bars():
     }
 
     def handle_bar(context, _):
-        if str(context.now.date()) == '2005-01-10':
-            return_list = history_bars("000001.XSHE", 5, '1d', 'close')
+        if str(context.now.date()) == "2005-01-10":
+            return_list = history_bars("000001.XSHE", 5, "1d", "close")
             assert return_list.tolist() == [6.52, 6.46, 6.52, 6.51, 6.59]
             try:
                 history_bars("300555.XSHE", 5, "1d")
             except RQInvalidArgument:
                 pass
             else:
-                raise AssertionError("instrument has not been listed yet, RQInvalidArgument is supposed to be raised")
+                raise AssertionError(
+                    "instrument has not been listed yet, RQInvalidArgument is supposed to be raised"
+                )
 
         return_list = history_bars("000003.XSHE", 100, "1d")
         assert len(return_list) == 0
@@ -173,59 +186,63 @@ def test_history_bars():
 
 
 def test_all_instruments():
-    __config__ = {"base": {
-        "start_date": "2017-01-01",
-        "end_date": "2017-01-31",
-    }}
+    __config__ = {
+        "base": {
+            "start_date": "2017-01-01",
+            "end_date": "2017-01-31",
+        }
+    }
 
     def handle_bar(context, _):
         date = context.now.replace(hour=0, minute=0, second=0)
-        df = all_instruments('CS')
-        assert (df['listed_date'] <= date).all()
-        assert (df['de_listed_date'] > date).all()
+        df = all_instruments("CS")
+        assert (df["listed_date"] <= date).all()
+        assert (df["de_listed_date"] > date).all()
         # assert all(not is_suspended(o) for o in df['order_book_id'])
-        assert (df['type'] == 'CS').all()
+        assert (df["type"] == "CS").all()
 
-        df1 = all_instruments('Stock')
-        assert sorted(df['order_book_id']) == sorted(df1['order_book_id'])
+        df1 = all_instruments("Stock")
+        assert sorted(df["order_book_id"]) == sorted(df1["order_book_id"])
 
-        df2 = all_instruments('Future')
+        df2 = all_instruments("Future")
 
-        assert (df2['type'] == 'Future').all()
-        assert (df2['listed_date'] <= date).all()
-        assert (df2['de_listed_date'] >= date).all()
+        assert (df2["type"] == "Future").all()
+        assert (df2["listed_date"] <= date).all()
+        assert (df2["de_listed_date"] >= date).all()
 
-        df3 = all_instruments(['Future', 'Stock'])
-        assert sorted(list(df['order_book_id']) + list(df2['order_book_id'])) == sorted(df3['order_book_id'])
+        df3 = all_instruments(["Future", "Stock"])
+        assert sorted(list(df["order_book_id"]) + list(df2["order_book_id"])) == sorted(
+            df3["order_book_id"]
+        )
 
     return locals()
 
 
 def test_instruments_code():
     def init(context):
-        context.s1 = '000001.XSHE'
+        context.s1 = "000001.XSHE"
 
     def handle_bar(context, _):
         ins = instruments(context.s1)
-        assert ins.sector_code_name == '金融'
-        assert ins.symbol == '平安银行'
+        assert ins.sector_code_name == "金融"
+        assert ins.symbol == "平安银行"
         assert ins.order_book_id == context.s1
-        assert ins.type == 'CS'
+        assert ins.type == "CS"
 
     return locals()
 
 
 def test_sector():
     def handle_bar(_, __):
-        assert len(sector('金融')) >= 80, "sector('金融') 返回结果少于 80 个"
+        assert len(sector("金融")) >= 80, "sector('金融') 返回结果少于 80 个"
 
     return locals()
 
 
 def test_industry():
     def init(context):
-        context.s1 = '000001.XSHE'
-        context.s2 = '600340.XSHG'
+        context.s1 = "000001.XSHE"
+        context.s2 = "600340.XSHG"
 
     def handle_bar(context, _):
         ins_1 = instruments(context.s1)
@@ -242,78 +259,101 @@ def test_get_trading_dates():
     import datetime
 
     def init(_):
-        trading_dates_list = get_trading_dates('2016-12-15', '2017-01-03')
-        correct_dates_list = [datetime.date(2016, 12, 15), datetime.date(2016, 12, 16), datetime.date(2016, 12, 19),
-                              datetime.date(2016, 12, 20), datetime.date(2016, 12, 21), datetime.date(2016, 12, 22),
-                              datetime.date(2016, 12, 23), datetime.date(2016, 12, 26), datetime.date(2016, 12, 27),
-                              datetime.date(2016, 12, 28), datetime.date(2016, 12, 29), datetime.date(2016, 12, 30),
-                              datetime.date(2017, 1, 3)]
-        assert sorted([item.strftime("%Y%m%d") for item in correct_dates_list]) == sorted(
-            [item.strftime("%Y%m%d") for item
-             in trading_dates_list])
+        trading_dates_list = get_trading_dates("2016-12-15", "2017-01-03")
+        correct_dates_list = [
+            datetime.date(2016, 12, 15),
+            datetime.date(2016, 12, 16),
+            datetime.date(2016, 12, 19),
+            datetime.date(2016, 12, 20),
+            datetime.date(2016, 12, 21),
+            datetime.date(2016, 12, 22),
+            datetime.date(2016, 12, 23),
+            datetime.date(2016, 12, 26),
+            datetime.date(2016, 12, 27),
+            datetime.date(2016, 12, 28),
+            datetime.date(2016, 12, 29),
+            datetime.date(2016, 12, 30),
+            datetime.date(2017, 1, 3),
+        ]
+        assert sorted(
+            [item.strftime("%Y%m%d") for item in correct_dates_list]
+        ) == sorted([item.strftime("%Y%m%d") for item in trading_dates_list])
 
     return locals()
 
 
 def test_get_current_snapshot():
-
     def open_auction(context, bar_dict):
         if date(2016, 12, 12) == context.now.date():
             bar = current_snapshot("000001.XSHE")
-            assert bar["last"] == 9.65, "早盘集合竞价的current_snapshot的last不等于当天的open"
+            assert bar["last"] == 9.65, (
+                "早盘集合竞价的current_snapshot的last不等于当天的open"
+            )
 
     def handle_bar(context, bar_dict):
         if date(2016, 12, 12) == context.now.date():
             bar = current_snapshot("000001.XSHE")
-            assert bar["last"] == 9.5, "尾盘集合竞价的current_snapshot的last不等于当天的close"
+            assert bar["last"] == 9.5, (
+                "尾盘集合竞价的current_snapshot的last不等于当天的close"
+            )
 
     return locals()
 
 
 def test_get_previous_trading_date():
     def init(_):
-        assert str(get_previous_trading_date('2017-01-03').date()) == '2016-12-30'
-        assert str(get_previous_trading_date('2016-01-03').date()) == '2015-12-31'
-        assert str(get_previous_trading_date('2015-01-03').date()) == '2014-12-31'
-        assert str(get_previous_trading_date('2014-01-03').date()) == '2014-01-02'
-        assert str(get_previous_trading_date('2010-01-03').date()) == '2009-12-31'
-        assert str(get_previous_trading_date('2009-01-03').date()) == '2008-12-31'
-        assert str(get_previous_trading_date('2005-01-05').date()) == '2005-01-04'
+        assert str(get_previous_trading_date("2017-01-03").date()) == "2016-12-30"
+        assert str(get_previous_trading_date("2016-01-03").date()) == "2015-12-31"
+        assert str(get_previous_trading_date("2015-01-03").date()) == "2014-12-31"
+        assert str(get_previous_trading_date("2014-01-03").date()) == "2014-01-02"
+        assert str(get_previous_trading_date("2010-01-03").date()) == "2009-12-31"
+        assert str(get_previous_trading_date("2009-01-03").date()) == "2008-12-31"
+        assert str(get_previous_trading_date("2005-01-05").date()) == "2005-01-04"
 
     return locals()
 
 
 def test_get_next_trading_date():
     def init(_):
-        assert str(get_next_trading_date('2017-01-03').date()) == '2017-01-04'
-        assert str(get_next_trading_date('2007-01-03').date()) == '2007-01-04'
+        assert str(get_next_trading_date("2017-01-03").date()) == "2017-01-04"
+        assert str(get_next_trading_date("2007-01-03").date()) == "2007-01-04"
 
     return locals()
 
 
 def test_get_dividend():
     def handle_bar(_, __):
-        df = get_dividend('000001.XSHE', start_date='20130104')
-        df_to_assert = df[df['book_closure_date'] == 20130619]
+        df = get_dividend("000001.XSHE", start_date="20130104")
+        df_to_assert = df[df["book_closure_date"] == 20130619]
         assert len(df) >= 4
-        assert df_to_assert[0]['dividend_cash_before_tax'] == 1.7
-        assert df_to_assert[0]['payable_date'] == 20130620
+        assert df_to_assert[0]["dividend_cash_before_tax"] == 1.7
+        assert df_to_assert[0]["payable_date"] == 20130620
 
     return locals()
 
 
 def test_current_snapshot():
     def handle_bar(_, bar_dict):
-        snapshot = current_snapshot('000001.XSHE')
-        bar = bar_dict['000001.XSHE']
+        snapshot = current_snapshot("000001.XSHE")
+        bar = bar_dict["000001.XSHE"]
 
         assert snapshot.last == bar.close
         for field in (
-                "open", "high", "low", "prev_close", "volume", "total_turnover", "order_book_id", "datetime",
-                "limit_up", "limit_down"
+            "open",
+            "high",
+            "low",
+            "prev_close",
+            "volume",
+            "total_turnover",
+            "order_book_id",
+            "datetime",
+            "limit_up",
+            "limit_down",
         ):
-            assert getattr(bar, field) == getattr(snapshot, field), "snapshot.{} = {}, bar.{} = {}".format(
-                field, getattr(snapshot, field), field, getattr(bar, field)
+            assert getattr(bar, field) == getattr(snapshot, field), (
+                "snapshot.{} = {}, bar.{} = {}".format(
+                    field, getattr(snapshot, field), field, getattr(bar, field)
+                )
             )
 
     return locals()
@@ -322,8 +362,10 @@ def test_current_snapshot():
 def test_get_position():
     def assert_position(pos, obid, dir, today_quantity, old_quantity):
         assert pos.order_book_id == obid
-        assert pos.direction == dir, "Direction of {} is expected to be {} instead of {}".format(
-            pos.order_book_id, dir, pos.direction
+        assert pos.direction == dir, (
+            "Direction of {} is expected to be {} instead of {}".format(
+                pos.order_book_id, dir, pos.direction
+            )
         )
         assert pos._old_quantity == old_quantity
         assert pos.quantity == (today_quantity + old_quantity)
@@ -345,10 +387,14 @@ def test_get_position():
             buy_close("RB1701", 2)
 
         if context.counter == 1:
-            pos = [p for p in get_positions() if p.direction == POSITION_DIRECTION.LONG][0]
+            pos = [
+                p for p in get_positions() if p.direction == POSITION_DIRECTION.LONG
+            ][0]
             assert_position(pos, "000001.XSHE", POSITION_DIRECTION.LONG, 300, 0)
         elif 1 < context.counter < 5:
-            pos = [p for p in get_positions() if p.direction == POSITION_DIRECTION.LONG][0]
+            pos = [
+                p for p in get_positions() if p.direction == POSITION_DIRECTION.LONG
+            ][0]
             assert_position(pos, "000001.XSHE", POSITION_DIRECTION.LONG, 0, 300)
         elif 5 <= context.counter < 10:
             pos = get_position("000001.XSHE", POSITION_DIRECTION.LONG)
@@ -393,8 +439,8 @@ def test_order():
     def init(context):
         context.counter = 0
 
-        context.stock = '000001.XSHE'
-        context.future = 'IF88'
+        context.stock = "000001.XSHE"
+        context.future = "IF88"
 
     def handle_bar(context, bar_dict):
         context.counter += 1
@@ -403,7 +449,9 @@ def test_order():
             order(context.future, -100)
         elif context.counter == 2:
             assert get_position(context.stock).quantity == 200
-            assert get_position(context.future, POSITION_DIRECTION.SHORT).quantity == 100
+            assert (
+                get_position(context.future, POSITION_DIRECTION.SHORT).quantity == 100
+            )
             order(context.stock, -100)
             order(context.future, 200)
         elif context.counter == 3:
@@ -427,8 +475,8 @@ def test_order_to():
     def init(context):
         context.counter = 0
 
-        context.stock = '000001.XSHE'
-        context.future = 'IF88'
+        context.stock = "000001.XSHE"
+        context.future = "IF88"
 
     def handle_bar(context, bar_dict):
         context.counter += 1
@@ -437,7 +485,9 @@ def test_order_to():
             order_to(context.future, -100)
         elif context.counter == 2:
             assert get_position(context.stock).quantity == 200
-            assert get_position(context.future, POSITION_DIRECTION.SHORT).quantity == 100
+            assert (
+                get_position(context.future, POSITION_DIRECTION.SHORT).quantity == 100
+            )
             order_to(context.stock, 100)
             order_to(context.future, 100)
         elif context.counter == 3:
@@ -461,8 +511,8 @@ def test_deposit_and_withdraw():
     def init(context):
         context.counter = 0
 
-        context.stock = '000001.XSHE'
-        context.future = 'IF88'
+        context.stock = "000001.XSHE"
+        context.future = "IF88"
 
     def handle_bar(context, bar_dict):
         context.counter += 1
@@ -494,7 +544,7 @@ def test_deposit_and_withdraw():
         elif context.counter == 6:
             try:
                 flag = withdraw("FUTURE", 100000000)
-            except ValueError as err:
+            except ValueError:
                 assert True, "捕获输入异常"
             else:
                 assert False, "未报出当前账户可取出金额不足异常"
@@ -503,7 +553,10 @@ def test_deposit_and_withdraw():
             context.cash = context.portfolio.accounts["STOCK"].cash
 
         elif context.counter == 9:
-            assert int(context.portfolio.accounts["STOCK"].cash) == int(context.cash) + 10000
+            assert (
+                int(context.portfolio.accounts["STOCK"].cash)
+                == int(context.cash) + 10000
+            )
 
     return locals()
 
@@ -521,8 +574,8 @@ def test_deposit_withdraw_before_and_after_trading():
     def init(context):
         context.counter = 0
 
-        context.stock = '000001.XSHE'
-        context.future = 'IF88'
+        context.stock = "000001.XSHE"
+        context.future = "IF88"
 
     def before_trading(context):
         context.counter += 1
