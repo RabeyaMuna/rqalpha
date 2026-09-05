@@ -317,7 +317,7 @@ import sys
 import functools
 
 
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 
 have_tomllib = True
 if sys.version_info >= (3, 11):
