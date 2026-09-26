@@ -317,7 +317,13 @@ import sys
 import functools
 
 
-from pkg_resources import parse_version
+try:
+    from packaging.version import parse as parse_version
+except ImportError:
+    try:
+        from setuptools._vendor.packaging.version import parse as parse_version
+    except ImportError:
+        from pkg_resources import parse_version
 
 have_tomllib = True
 if sys.version_info >= (3, 11):
