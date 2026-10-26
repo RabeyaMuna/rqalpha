@@ -47,6 +47,7 @@ def max_dd(arr: array, index: DatetimeIndex) -> IndexRange:
 
 
 def max_ddd(arr: array, index: DatetimeIndex) -> IndexRange:
+    arr = np.asarray(arr)
     max_seen = arr[0]
     ddd_start, ddd_end = 0, 0
     ddd = 0
