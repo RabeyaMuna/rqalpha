@@ -137,8 +137,24 @@ CDN_URL = 'http://bundle.assets.ricequant.com/bundles_v4/rqbundle_%04d%02d.tar.b
 
 
 def get_exactly_url():
-    day = datetime.date.today()
     proxy_uri = os.environ.get('RQALPHA_PROXY')
+    bundle_date = os.environ.get('RQALPHA_BUNDLE_DATE')
+    if bundle_date:
+        if len(bundle_date) != 6 or not bundle_date.isdigit():
+            raise ValueError("RQALPHA_BUNDLE_DATE must use YYYYMM format")
+        try:
+            day = datetime.datetime.strptime(bundle_date, "%Y%m").date()
+        except ValueError:
+            raise ValueError("RQALPHA_BUNDLE_DATE must use YYYYMM format")
+
+        url = CDN_URL % (day.year, day.month)
+        six.print_(_(u"try {} ...").format(url))
+        r = requests.get(url, stream=True, proxies={'http': proxy_uri, 'https': proxy_uri})
+        if r.status_code != 200:
+            raise RuntimeError("Pinned bundle is unavailable: {}".format(url))
+        return url, int(r.headers.get('content-length'))
+
+    day = datetime.date.today()
     while True:  # get exact url
         url = CDN_URL % (day.year, day.month)
         six.print_(_(u"try {} ...").format(url))
@@ -201,4 +217,3 @@ def check_bundle_data(data_bundle_path):
         click.echo(_("bundle's day bar is incomplete, please update bundle"))
     else:
         click.echo(_("good bundle's day bar"))
-
